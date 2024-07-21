@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#SBATCH --job-name gvqa_training_original
+#SBATCH --job-name gvqa_training_vid_env_concat_env_query_ca
 #SBATCH --gres=gpu:8
 #SBATCH --cpus-per-gpu=8
 #SBATCH --mem-per-gpu=29G
@@ -19,10 +19,10 @@ else
 fi
 
 ##########Batch size and learning rate calculation##########
-NUMBER_Of_GPUS=8
+NUMBER_Of_GPUS=1
 export base_lr=0.0001
 export base_bsz=$(( $NUMBER_Of_GPUS * 16 ))
-export bsz_per_gpu=4
+export bsz_per_gpu=6
 export bsz=$(( $NUMBER_Of_GPUS * $bsz_per_gpu ))
 export lr=$(python -c "print(f'{""$base_lr / $base_bsz * $bsz"":.5e}')")
 echo "Base LR: $base_lr, Base BSZ: $base_bsz, LR: $lr, BSZ: $bsz"
@@ -36,10 +36,10 @@ echo "Job ID: $job_id"
 
 ##########Env feature##########
 # env_feature=/data/gunsbrother/prjs/ltvu/llms/GroundVQA/data/features/cheat_envs/01_cheat_env_bimodal_plus1 # have to change env_feature_type=cheating
-env_feature=/data/soyeonhong/GroundVQA/env_feature/$job_id/captions
-sbert_q_feat_path=/data/soyeonhong/GroundVQA/env_feature/$job_id/queries
-# env_feature=/data/soyeonhong/GroundVQA/env_feature_pretrained/all-mpnet-base-v2/captions
-# sbert_q_feat_path=/data/soyeonhong/GroundVQA/env_feature_pretrained/all-mpnet-base-v2/queries
+# env_feature=/data/soyeonhong/GroundVQA/env_feature/$job_id/captions
+# sbert_q_feat_path=/data/soyeonhong/GroundVQA/env_feature/$job_id/queries
+env_feature=/data/soyeonhong/GroundVQA/env_feature_pretrained/all-mpnet-base-v2/captions
+sbert_q_feat_path=/data/soyeonhong/GroundVQA/env_feature_pretrained/all-mpnet-base-v2/queries
 echo "Env Feature: $env_feature"
 echo "Query Feature: $sbert_q_feat_path"
 ##########Env feature##########
@@ -58,9 +58,6 @@ python run.py \
     "trainer.max_epochs=$epoch" \
     "dataset.env_feature.env_feature_path=$env_feature" \
     "dataset.env_feature.sbert_q_feat_path=$sbert_q_feat_path" \
-    "model.vid_env_arch=None" \
-    "model.query_env_arch=None" \
-    "model.ignore_decoder=False"
     # "dataset.env_feature.env_feature_type=cheating"
 ##########Training##########
 

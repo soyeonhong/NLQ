@@ -7,6 +7,7 @@ from transformers.modeling_outputs import BaseModelOutput
 from model.ours.nlq_head import NLQHead
 
 from transformers.models.t5.modeling_t5 import T5Stack
+from einops import rearrange
 
 def interp_env_feat(tensor, B, T_target, mode='nearest'):
     D, dtype = tensor.shape[-1], tensor.dtype
@@ -55,6 +56,7 @@ class GroundVQA(nn.Module):
             
         if self.vid_sum_arch == 'vid_t_proj':
             self.vid_t_proj = nn.Linear(1200, 600) 
+            self.vid_sum_proj = nn.Linear(lm_dim * 2, lm_dim)
             
             
             
@@ -158,8 +160,35 @@ class GroundVQA(nn.Module):
         ########## query, env feat ##########
         
         ########## vid summary ##########
-        # if self.vid_sum_arc == 'vid_t_proj':
-        #     encoder_out_v = self.vid_t_proj(encoder_out_v)
+        if self.vid_sum_arch == 'vid_t_proj':
+            B, T, D = encoder_out_v.shape
+        
+            # Padding condition
+            if v_feat.shape[1] != 1200:
+                encoder_out_v_padded = F.pad(encoder_out_v, (0, 0, 0, 1200 - T), "constant", 0)  # [B, 1200, D]
+            else:
+                encoder_out_v_padded = encoder_out_v
+
+            # Rearranging the tensor for projection
+            encoder_out_v_padded = rearrange(encoder_out_v_padded, 'b t d -> b d t')  # [B, D, 1200]
+            encoder_out_v_padded = rearrange(encoder_out_v_padded, 'b d t -> (b d) t')  # [B * D, 1200]
+            
+            # Applying the projection
+            encoder_out_v_padded = self.vid_t_proj(encoder_out_v_padded)  # [B * D, proj_T]
+            
+            # Rearranging back to original dimensions
+            encoder_out_v_padded = rearrange(encoder_out_v_padded, '(b d) t -> b t d', b=B, d=D)  # [B, proj_T, D]
+            
+            # Interpolating back to original shape
+            encoder_out_v_padded = F.interpolate(encoder_out_v_padded.unsqueeze(0).unsqueeze(0).to(torch.float32), size=(B, T, D), mode='nearest').squeeze(0).squeeze(0)  # [B, T, D]
+
+            # Applying the mask and combining with original
+            encoder_out_v_padded = encoder_out_v_padded * v_mask.unsqueeze(2)
+            
+            res = encoder_out_v
+            encoder_out_v = self.vid_sum_proj(torch.cat([encoder_out_v, encoder_out_v_padded], dim=2))
+            encoder_out_v = F.gelu(encoder_out_v)
+            encoder_out_v = res + encoder_out_v
         
         ########## vid, env feat ##########
         if self.vid_env_arch == 'concat':
