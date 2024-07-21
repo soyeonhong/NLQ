@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #SBATCH --job-name gvqa_training_vid_concat_egovlp
-#SBATCH --gres=gpu:7
+#SBATCH --gres=gpu:8
 #SBATCH --cpus-per-gpu=8
 #SBATCH --mem-per-gpu=29G
 #SBATCH --partition batch_grad
