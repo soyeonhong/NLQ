@@ -5,4 +5,5 @@ freeze_word: True
 ignore_decoder: True
 vid_env_arch: 'concat'
 query_env_arch: 'ca'
+vid_sum_arch: None
 env_feature_dim: 768

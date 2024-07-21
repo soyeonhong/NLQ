@@ -93,22 +93,22 @@ def train(config: DictConfig):
     if trainer_cfg.checkpoint_path:
         print(f'Load checkpoint: {trainer_cfg.checkpoint_path}')
         state_dict = torch.load(trainer_cfg.checkpoint_path, map_location='cpu')['state_dict']
-        
-        print("=" * 50)
-        param_names = ['vid_t_proj', 'nlq_head', 'env_q_sbert_attn', 'gamma', 'env_emb',  'vid_sum_env_proj',  'vid_sum_emb', 'vid_sum_proj', 'vid_sum_attn', 'gamma2', 'vid_sum_env_attn', 'vid_sum_env_attn', 'alpha', 'vid_env_proj', 'vid_sum_proj', 'query_env_proj']
+        if not trainer_cfg.test_only:
+            print("=" * 50)
+            param_names = ['vid_t_proj', 'nlq_head', 'env_q_sbert_attn', 'gamma', 'env_emb',  'vid_sum_env_proj',  'vid_sum_emb', 'vid_sum_proj', 'vid_sum_attn', 'gamma2', 'vid_sum_env_attn', 'vid_sum_env_attn', 'alpha', 'vid_env_proj', 'vid_sum_proj', 'query_env_proj']
 
-        for name, param in model.named_parameters():
-            # Check if the current parameter name contains any of the specified substrings
-            if any(substring in name for substring in param_names):
-                if 'shared' in name:
-                    param.requires_grad = False
+            for name, param in model.named_parameters():
+                # Check if the current parameter name contains any of the specified substrings
+                if any(substring in name for substring in param_names):
+                    if 'shared' in name:
+                        param.requires_grad = False
+                    else:
+                        print(name)
+                        param.requires_grad = True
                 else:
-                    print(name)
-                    param.requires_grad = True
-            else:
-                param.requires_grad = False
-        
-        print("=" * 50)
+                    param.requires_grad = False
+            
+            print("=" * 50)
         
         missing_keys, unexpected_keys = model.load_state_dict(state_dict, strict=False)
         print(f'Missing Keys: {missing_keys}')
