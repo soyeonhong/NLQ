@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#SBATCH --job-name gvqa_training_env_vid_concat_env_vid_ca
+#SBATCH --job-name gvqa_training_original
 #SBATCH --gres=gpu:7
 #SBATCH --cpus-per-gpu=8
 #SBATCH --mem-per-gpu=29G
