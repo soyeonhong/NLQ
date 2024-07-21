@@ -115,7 +115,8 @@ def train(config: DictConfig):
         print(f'Unexpected Keys: {unexpected_keys}')
     else:
         print('Train from scratch')
-        print(model)
+    
+    print(model)
 
 
     if trainer_cfg.test_only:  # evaluation
@@ -169,6 +170,24 @@ def train(config: DictConfig):
         trainer.fit(
             model, data.train_dataloader(), [data.val_dataloader(), data.train_dataloader()], 
         )
+        
+        
+        # trainer: pl.Trainer = pl.Trainer.from_argparse_args(
+        #     trainer_cfg,
+        #     callbacks=[
+        #         ModelSummary(max_depth=2),
+        #         LearningRateMonitor(logging_interval='step'),
+        #         # StochasticWeightAveraging(swa_lrs=1e-2),
+        #         *model_checkpoint
+        #     ],
+        #     logger=TensorBoardLogger(
+        #         save_dir=trainer_cfg.default_root_dir,
+        #         version=os.environ.get("SLURM_JOB_ID"),
+        #         name="lit",
+        #         # sub_dir='tb',
+        #         default_hp_metric=False
+        #     )
+        # )
 
     
 if __name__ == '__main__':

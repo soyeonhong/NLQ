@@ -174,3 +174,5 @@ cython_debug/
 /cross_encoding
 /query_features
 *.pt
+/llava-v1.6-34b
+/LLaVA-NeXT-Video-7B-DPO
